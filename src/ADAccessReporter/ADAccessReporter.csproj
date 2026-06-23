@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ADAccessReporter</AssemblyName>
+    <RootNamespace>ADAccessReporter</RootNamespace>
+    <ApplicationIcon>..\..\assets\ad-access-reporter.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <Authors>Open Source</Authors>
+    <Description>Windows desktop utility for AD group membership comparison and folder ACL reporting.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.9" />
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
+  </ItemGroup>
+
+</Project>

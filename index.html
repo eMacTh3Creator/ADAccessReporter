@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AD Access Reporter</title>
+  <meta name="description" content="Windows desktop utility for AD group comparison and folder ACL reporting.">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5b667a;
+      --line: #d9e0ea;
+      --panel: #ffffff;
+      --page: #f3f6f9;
+      --blue: #2563eb;
+      --teal: #14b8a6;
+      --amber: #d97706;
+      --dark: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--ink);
+      background: var(--page);
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .hero {
+      min-height: 88vh;
+      display: grid;
+      align-items: center;
+      background: var(--dark);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 20vh;
+      background: var(--page);
+      clip-path: polygon(0 68%, 100% 28%, 100% 100%, 0 100%);
+    }
+
+    .hero-inner {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(420px, 1.15fr);
+      gap: 44px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      padding: 52px 0 120px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 30px;
+      color: #dbeafe;
+      font-weight: 700;
+    }
+
+    .brand img {
+      width: 46px;
+      height: 46px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 7vw, 78px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 24px 0 32px;
+      max-width: 620px;
+      color: #d5dde8;
+      font-size: 20px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 7px;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+    }
+
+    .primary {
+      background: var(--teal);
+      color: #042f2e;
+      border-color: var(--teal);
+    }
+
+    .secondary {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .preview {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      display: block;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 40px));
+      margin: -40px auto 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    section {
+      padding: 56px 0;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      min-height: 162px;
+    }
+
+    .card b {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 17px;
+    }
+
+    .card p,
+    .split p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 26px;
+    }
+
+    code {
+      font-family: Consolas, "Liberation Mono", monospace;
+      background: #e9eef5;
+      border: 1px solid #d6deea;
+      padding: 2px 5px;
+      border-radius: 5px;
+    }
+
+    footer {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 880px) {
+      .hero-inner,
+      .split,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-inner {
+        padding: 32px 0 88px;
+      }
+
+      main {
+        margin-top: -24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="brand">
+          <img src="assets/ad-access-reporter.png" alt="">
+          <span>AD Access Reporter</span>
+        </div>
+        <h1>AD Access Reporter</h1>
+        <p class="lead">A Windows desktop utility for pulling Active Directory group users, comparing multiple groups, exporting CSVs, and reporting folder NTFS rights from local or network share paths.</p>
+        <div class="actions">
+          <a class="button primary" href="release/ADAccessReporter-v0.1.0-win-x64.exe">Download EXE</a>
+          <a class="button secondary" href="release/ADAccessReporter-v0.1.0-portable.zip">Portable ZIP</a>
+          <a class="button secondary" href="https://github.com/eMacTh3Creator/ADAccessReporter">GitHub</a>
+        </div>
+      </div>
+      <img class="preview" src="assets/app-preview.png" alt="AD Access Reporter app preview">
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="grid">
+        <div class="card">
+          <b>AD group exports</b>
+          <p>Enter one or more group names, include nested members when needed, and export the full user list to CSV.</p>
+        </div>
+        <div class="card">
+          <b>Group comparison</b>
+          <p>Compare several groups at once and see who is common, unique, or missing from each group.</p>
+        </div>
+        <div class="card">
+          <b>Folder rights</b>
+          <p>Scan NTFS ACLs on local, file, or UNC paths and optionally expand AD groups into user rows.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Download</h2>
+        <p>The default portable build is a Windows x64 executable and requires the .NET 8 Desktop Runtime. Use the ZIP when you want the executable, license, manifest, and checksum files together.</p>
+      </div>
+      <div class="panel">
+        <p><b>Current version:</b> v0.1.0</p>
+        <p><b>Manifest:</b> <a href="release/latest.json">release/latest.json</a></p>
+        <p><b>Checksums:</b> <a href="release/checksums.txt">release/checksums.txt</a></p>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Build locally</h2>
+        <p>Build from source with the included release script.</p>
+      </div>
+      <div class="panel">
+        <code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Release.ps1</code>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    MIT licensed. Folder scans report NTFS permissions visible from the selected path; Windows share-level permissions are separate.
+  </footer>
+</body>
+</html>
