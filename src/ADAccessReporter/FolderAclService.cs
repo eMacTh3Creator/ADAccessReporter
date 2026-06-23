@@ -1,4 +1,3 @@
-using System.DirectoryServices.AccountManagement;
 using System.Security.AccessControl;
 
 namespace ADAccessReporter;
@@ -91,59 +90,33 @@ public sealed class FolderAclService
 
         try
         {
-            using var principal = ActiveDirectoryService.FindPrincipal(identity, options.DomainOrServer);
-            if (principal is not GroupPrincipal group)
-            {
-                return expanded;
-            }
-
             progress?.Report($"Expanding ACL group '{identity}'...");
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            using var members = group.GetMembers(true);
+            var userRecords = ActiveDirectoryService.GetExpandedGroupUsers(
+                identity,
+                options.DomainOrServer,
+                options.IncludeDisabledUsers,
+                cancellationToken);
 
-            foreach (var member in members)
+            foreach (var userRecord in userRecords)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (member is not UserPrincipal user)
+                expanded.Add(new FolderRightsRecord
                 {
-                    member.Dispose();
-                    continue;
-                }
-
-                using (user)
-                {
-                    var userRecord = ActiveDirectoryService.CreateRecord(identity, identity, user);
-                    if (!options.IncludeDisabledUsers &&
-                        string.Equals(userRecord.Enabled, "False", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    if (!seen.Add(userRecord.ComparisonKey))
-                    {
-                        continue;
-                    }
-
-                    expanded.Add(new FolderRightsRecord
-                    {
-                        Path = path,
-                        EntryKind = "Expanded group member",
-                        Identity = identity,
-                        PrincipalType = "User via group",
-                        AccessType = rule.AccessControlType.ToString(),
-                        Rights = rule.FileSystemRights.ToString(),
-                        IsInherited = rule.IsInherited ? "True" : "False",
-                        Inheritance = rule.InheritanceFlags.ToString(),
-                        Propagation = rule.PropagationFlags.ToString(),
-                        ExpandedUserName = userRecord.Name,
-                        ExpandedSamAccountName = userRecord.SamAccountName,
-                        ExpandedDisplayName = userRecord.DisplayName,
-                        ExpandedEmail = userRecord.Email,
-                        ExpandedUserPrincipalName = userRecord.UserPrincipalName,
-                        ExpandedSid = userRecord.Sid
-                    });
-                }
+                    Path = path,
+                    EntryKind = "Expanded group member",
+                    Identity = identity,
+                    PrincipalType = "User via group",
+                    AccessType = rule.AccessControlType.ToString(),
+                    Rights = rule.FileSystemRights.ToString(),
+                    IsInherited = rule.IsInherited ? "True" : "False",
+                    Inheritance = rule.InheritanceFlags.ToString(),
+                    Propagation = rule.PropagationFlags.ToString(),
+                    ExpandedUserName = userRecord.Name,
+                    ExpandedSamAccountName = userRecord.SamAccountName,
+                    ExpandedDisplayName = userRecord.DisplayName,
+                    ExpandedEmail = userRecord.Email,
+                    ExpandedUserPrincipalName = userRecord.UserPrincipalName,
+                    ExpandedSid = userRecord.Sid
+                });
             }
 
             progress?.Report($"Expanded {expanded.Count:N0} user(s) from '{identity}'.");

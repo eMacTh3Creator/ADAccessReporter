@@ -204,6 +204,57 @@ public sealed class ActiveDirectoryService
         };
     }
 
+    internal static IReadOnlyList<AdGroupMemberRecord> GetExpandedGroupUsers(
+        string groupIdentity,
+        string defaultDomainOrServer,
+        bool includeDisabledUsers,
+        CancellationToken cancellationToken)
+    {
+        var parts = IdentityParts.From(groupIdentity, defaultDomainOrServer);
+        if (IsWellKnownLocalAuthority(parts.ContextName))
+        {
+            return Array.Empty<AdGroupMemberRecord>();
+        }
+
+        var records = new List<AdGroupMemberRecord>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        using var context = CreateContextForPrincipal(parts.ContextName);
+        using var group = FindGroup(context, parts.SearchIdentity);
+        if (group is null)
+        {
+            return records;
+        }
+
+        using var members = group.GetMembers(true);
+        foreach (var member in members)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (member is not UserPrincipal user)
+            {
+                member.Dispose();
+                continue;
+            }
+
+            using (user)
+            {
+                var record = CreateRecord(groupIdentity, groupIdentity, user);
+                if (!includeDisabledUsers && string.Equals(record.Enabled, "False", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (seen.Add(record.ComparisonKey))
+                {
+                    records.Add(record);
+                }
+            }
+        }
+
+        return records;
+    }
+
     internal static AdGroupMemberRecord CreateRecord(string inputGroup, string groupName, UserPrincipal user)
     {
         var sid = user.Sid?.Value ?? string.Empty;
