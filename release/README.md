@@ -33,7 +33,7 @@ The app uses your current Windows credentials. If needed, enter a domain or doma
 
 ## Quick start
 
-1. Download `ADAccessReporter-v1.0.0-win-x64.exe` from the release folder or GitHub release.
+1. Download `ADAccessReporter-v1.0.1-win-x64.exe` from the release folder or GitHub release.
 2. Open the app on a domain-joined or domain-connected Windows machine.
 3. Enter one AD group per line and click **Load Groups**.
 4. Review the **Members** and **Comparison** tabs.
@@ -53,8 +53,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Release.ps
 
 Artifacts are written to `release\`:
 
-- `ADAccessReporter-v1.0.0-win-x64.exe`
-- `ADAccessReporter-v1.0.0-portable.zip`
+- `ADAccessReporter-v1.0.1-win-x64.exe`
+- `ADAccessReporter-v1.0.1-portable.zip`
 - `latest.json`
 - `checksums.txt`
 

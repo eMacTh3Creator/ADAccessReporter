@@ -64,9 +64,10 @@ public sealed class MainForm : Form
     public MainForm()
     {
         Text = "AD Access Reporter";
-        MinimumSize = new Size(1060, 720);
+        MinimumSize = new Size(1180, 760);
         Size = new Size(1280, 820);
         StartPosition = FormStartPosition.CenterScreen;
+        AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
         BackColor = PageColor;
         ShowIcon = true;
@@ -129,7 +130,7 @@ public sealed class MainForm : Form
             RowCount = 2,
             BackColor = Color.White
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 200));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var top = new TableLayoutPanel
@@ -139,15 +140,15 @@ public sealed class MainForm : Form
             RowCount = 1,
             BackColor = Color.White
         };
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 350));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240));
 
         var groupPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             RowCount = 2,
-            Padding = new Padding(0, 0, 22, 18),
+            Padding = new Padding(0, 0, 26, 18),
             BackColor = Color.White
         };
         groupPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
@@ -165,7 +166,7 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 5,
-            Padding = new Padding(0, 0, 22, 18),
+            Padding = new Padding(0, 0, 26, 18),
             BackColor = Color.White
         };
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
@@ -277,7 +278,7 @@ public sealed class MainForm : Form
             RowCount = 2,
             BackColor = Color.White
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 200));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var top = new TableLayoutPanel
@@ -287,15 +288,15 @@ public sealed class MainForm : Form
             RowCount = 1,
             BackColor = Color.White
         };
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
-        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240));
 
         var pathPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             RowCount = 4,
-            Padding = new Padding(0, 0, 22, 18),
+            Padding = new Padding(0, 0, 26, 18),
             BackColor = Color.White
         };
         pathPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
@@ -319,14 +320,14 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 7,
-            Padding = new Padding(0, 0, 22, 18),
+            Padding = new Padding(0, 0, 26, 18),
             BackColor = Color.White
         };
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
-        optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         for (var i = 0; i < 4; i++)
         {
-            optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
         }
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         optionPanel.Controls.Add(MakeLabel("Domain or controller (optional)"), 0, 0);
@@ -902,6 +903,13 @@ public sealed class MainForm : Form
 
     private static void ConfigureCheckBox(CheckBox checkBox)
     {
+        checkBox.AutoSize = true;
+        checkBox.AutoEllipsis = false;
+        checkBox.CheckAlign = ContentAlignment.MiddleLeft;
+        checkBox.TextAlign = ContentAlignment.MiddleLeft;
+        checkBox.Dock = DockStyle.Left;
+        checkBox.MinimumSize = new Size(0, 28);
+        checkBox.Margin = new Padding(0, 2, 0, 0);
         checkBox.ForeColor = MutedColor;
         checkBox.BackColor = Color.White;
         checkBox.FlatStyle = FlatStyle.System;

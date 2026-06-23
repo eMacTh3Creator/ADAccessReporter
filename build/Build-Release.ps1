@@ -8,7 +8,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$Version = '1.0.0'
+$Version = '1.0.1'
 $ReleaseTag = "v$Version"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $projectPath = Join-Path $repoRoot 'src\ADAccessReporter\ADAccessReporter.csproj'

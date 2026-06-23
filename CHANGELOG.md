@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.1
+
+- Fixed Folder Rights layout clipping at normal and minimum window sizes.
+- Kept option checkboxes single-line so labels no longer wrap under the checkbox glyph.
+- Switched top control areas to fixed option/action columns with a flexible input column.
+
 ## v1.0.0
 
 - Updated the real WinForms app to match the GitHub Pages mockup more closely.
