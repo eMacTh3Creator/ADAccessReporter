@@ -5,8 +5,26 @@ namespace ADAccessReporter;
 
 public sealed class MainForm : Form
 {
+    private static readonly Color PageColor = Color.FromArgb(226, 232, 240);
+    private static readonly Color HeaderColor = Color.FromArgb(17, 24, 39);
+    private static readonly Color InkColor = Color.FromArgb(23, 32, 51);
+    private static readonly Color MutedColor = Color.FromArgb(91, 102, 122);
+    private static readonly Color LineColor = Color.FromArgb(207, 217, 230);
+    private static readonly Color BlueColor = Color.FromArgb(37, 99, 235);
+    private static readonly Color TealColor = Color.FromArgb(20, 184, 166);
+    private static readonly Color AmberColor = Color.FromArgb(217, 119, 6);
+
     private readonly ActiveDirectoryService _adService = new();
     private readonly FolderAclService _folderAclService = new();
+
+    private readonly Panel _contentHost = new();
+    private readonly Button _groupsNavButton = new();
+    private readonly Button _folderNavButton = new();
+    private readonly Button _logNavButton = new();
+    private readonly List<Button> _mainNavButtons = new();
+    private Control? _groupsView;
+    private Control? _folderView;
+    private Control? _logView;
 
     private readonly TextBox _groupInput = new();
     private readonly TextBox _domainInput = new();
@@ -16,6 +34,10 @@ public sealed class MainForm : Form
     private readonly Button _exportMembersButton = new();
     private readonly Button _exportComparisonButton = new();
     private readonly Label _groupStatus = new();
+    private readonly Button _membersResultButton = new();
+    private readonly Button _comparisonResultButton = new();
+    private readonly Panel _membersGridPanel = new();
+    private readonly Panel _comparisonGridPanel = new();
     private readonly DataGridView _membersGrid = new();
     private readonly DataGridView _comparisonGrid = new();
 
@@ -46,7 +68,14 @@ public sealed class MainForm : Form
         Size = new Size(1280, 820);
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        BackColor = Color.FromArgb(246, 248, 250);
+        BackColor = PageColor;
+        ShowIcon = true;
+
+        var appIcon = LoadAppIcon();
+        if (appIcon is not null)
+        {
+            Icon = appIcon;
+        }
 
         BuildInterface();
         SetIdleState();
@@ -55,42 +84,60 @@ public sealed class MainForm : Form
 
     private void BuildInterface()
     {
-        var tabs = new TabControl
+        var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Padding = new Point(12, 6)
+            RowCount = 3,
+            ColumnCount = 1,
+            BackColor = PageColor
         };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        tabs.TabPages.Add(BuildGroupsTab());
-        tabs.TabPages.Add(BuildFolderTab());
-        tabs.TabPages.Add(BuildLogTab());
+        _groupsView = BuildGroupsView();
+        _folderView = BuildFolderView();
+        _logView = BuildLogView();
+
+        _contentHost.Dock = DockStyle.Fill;
+        _contentHost.BackColor = PageColor;
+        _contentHost.Controls.Add(_groupsView);
+        _contentHost.Controls.Add(_folderView);
+        _contentHost.Controls.Add(_logView);
 
         _statusStrip.Items.Add(_statusLabel);
         _statusStrip.SizingGrip = false;
+        _statusStrip.BackColor = Color.White;
         _statusLabel.Text = "Ready";
 
-        Controls.Add(tabs);
+        root.Controls.Add(BuildHeader(), 0, 0);
+        root.Controls.Add(BuildMainNavigation(), 0, 1);
+        root.Controls.Add(_contentHost, 0, 2);
+        Controls.Add(root);
         Controls.Add(_statusStrip);
+
+        ShowMainView(_groupsView, _groupsNavButton);
     }
 
-    private TabPage BuildGroupsTab()
+    private Control BuildGroupsView()
     {
-        var page = new TabPage("AD Groups") { BackColor = BackColor };
+        var page = new Panel { Dock = DockStyle.Fill, BackColor = PageColor, Padding = new Padding(44, 18, 44, 28) };
         var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Padding = new Padding(12)
+            BackColor = Color.White
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 200));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var top = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 1
+            RowCount = 1,
+            BackColor = Color.White
         };
         top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
         top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
@@ -100,22 +147,26 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 2,
-            Padding = new Padding(0, 0, 12, 8)
+            Padding = new Padding(0, 0, 22, 18),
+            BackColor = Color.White
         };
         groupPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         groupPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         groupPanel.Controls.Add(MakeLabel("Group names, one per line or semicolon separated"), 0, 0);
         _groupInput.Multiline = true;
-        _groupInput.ScrollBars = ScrollBars.Vertical;
+        _groupInput.ScrollBars = ScrollBars.None;
         _groupInput.Dock = DockStyle.Fill;
         _groupInput.PlaceholderText = "Domain Admins\r\nVPN Users\r\nDOMAIN\\Finance Share Access";
+        _groupInput.Font = new Font("Consolas", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+        ConfigureTextBox(_groupInput);
         groupPanel.Controls.Add(_groupInput, 0, 1);
 
         var optionPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             RowCount = 5,
-            Padding = new Padding(0, 0, 12, 8)
+            Padding = new Padding(0, 0, 22, 18),
+            BackColor = Color.White
         };
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
@@ -125,16 +176,19 @@ public sealed class MainForm : Form
         optionPanel.Controls.Add(MakeLabel("Domain or controller (optional)"), 0, 0);
         _domainInput.Dock = DockStyle.Top;
         _domainInput.PlaceholderText = "corp.example.com or DC01";
+        ConfigureTextBox(_domainInput);
         optionPanel.Controls.Add(_domainInput, 0, 1);
         _recursiveCheck.Text = "Include nested group members";
         _recursiveCheck.Checked = true;
         _recursiveCheck.Dock = DockStyle.Fill;
+        ConfigureCheckBox(_recursiveCheck);
         optionPanel.Controls.Add(_recursiveCheck, 0, 2);
         _includeDisabledCheck.Text = "Include disabled user accounts";
         _includeDisabledCheck.Dock = DockStyle.Fill;
+        ConfigureCheckBox(_includeDisabledCheck);
         optionPanel.Controls.Add(_includeDisabledCheck, 0, 3);
         _groupStatus.Dock = DockStyle.Fill;
-        _groupStatus.ForeColor = Color.FromArgb(83, 92, 104);
+        _groupStatus.ForeColor = MutedColor;
         _groupStatus.TextAlign = ContentAlignment.BottomLeft;
         optionPanel.Controls.Add(_groupStatus, 0, 4);
 
@@ -142,17 +196,18 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 5,
-            Padding = new Padding(0, 24, 0, 8)
+            Padding = new Padding(0, 24, 0, 18),
+            BackColor = Color.White
         };
         for (var i = 0; i < 4; i++)
         {
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
         }
         buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        ConfigureButton(_loadGroupsButton, "Load Groups", LoadGroupsButton_Click);
-        ConfigureButton(_exportMembersButton, "Export Members CSV", ExportMembersButton_Click);
-        ConfigureButton(_exportComparisonButton, "Export Comparison CSV", ExportComparisonButton_Click);
+        ConfigureButton(_loadGroupsButton, "Load Groups", LoadGroupsButton_Click, BlueColor, Color.White);
+        ConfigureButton(_exportMembersButton, "Export Members CSV", ExportMembersButton_Click, TealColor, Color.White);
+        ConfigureButton(_exportComparisonButton, "Export Comparison CSV", ExportComparisonButton_Click, Color.White, InkColor);
         buttonPanel.Controls.Add(_loadGroupsButton, 0, 0);
         buttonPanel.Controls.Add(_exportMembersButton, 0, 1);
         buttonPanel.Controls.Add(_exportComparisonButton, 0, 2);
@@ -161,40 +216,76 @@ public sealed class MainForm : Form
         top.Controls.Add(optionPanel, 1, 0);
         top.Controls.Add(buttonPanel, 2, 0);
 
-        var resultTabs = new TabControl { Dock = DockStyle.Fill };
-        var membersPage = new TabPage("Members") { BackColor = BackColor };
-        var comparisonPage = new TabPage("Comparison") { BackColor = BackColor };
+        var resultArea = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            ColumnCount = 1,
+            BackColor = Color.White
+        };
+        resultArea.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        resultArea.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        var resultNav = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(0, 0, 0, 0)
+        };
+
+        ConfigureSegmentButton(_membersResultButton, "Members", (_, _) => ShowGroupResultView(true));
+        ConfigureSegmentButton(_comparisonResultButton, "Comparison", (_, _) => ShowGroupResultView(false));
+        resultNav.Controls.Add(_membersResultButton);
+        resultNav.Controls.Add(_comparisonResultButton);
+
+        var resultHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            Padding = new Padding(0, 4, 0, 0)
+        };
         ConfigureGrid(_membersGrid);
         ConfigureGrid(_comparisonGrid);
-        membersPage.Controls.Add(_membersGrid);
-        comparisonPage.Controls.Add(_comparisonGrid);
-        resultTabs.TabPages.Add(membersPage);
-        resultTabs.TabPages.Add(comparisonPage);
+        _comparisonGrid.CellFormatting += ComparisonGrid_CellFormatting;
+        _membersGridPanel.Dock = DockStyle.Fill;
+        _membersGridPanel.BackColor = Color.White;
+        _comparisonGridPanel.Dock = DockStyle.Fill;
+        _comparisonGridPanel.BackColor = Color.White;
+        _membersGridPanel.Controls.Add(_membersGrid);
+        _comparisonGridPanel.Controls.Add(_comparisonGrid);
+        resultHost.Controls.Add(_comparisonGridPanel);
+        resultHost.Controls.Add(_membersGridPanel);
+        resultArea.Controls.Add(resultNav, 0, 0);
+        resultArea.Controls.Add(resultHost, 0, 1);
 
         layout.Controls.Add(top, 0, 0);
-        layout.Controls.Add(resultTabs, 0, 1);
-        page.Controls.Add(layout);
+        layout.Controls.Add(resultArea, 0, 1);
+        page.Controls.Add(CreateSurface(layout));
+        ShowGroupResultView(true);
         return page;
     }
 
-    private TabPage BuildFolderTab()
+    private Control BuildFolderView()
     {
-        var page = new TabPage("Folder Rights") { BackColor = BackColor };
+        var page = new Panel { Dock = DockStyle.Fill, BackColor = PageColor, Padding = new Padding(44, 18, 44, 28) };
         var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Padding = new Padding(12)
+            BackColor = Color.White
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 174));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 200));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var top = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 1
+            RowCount = 1,
+            BackColor = Color.White
         };
         top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
@@ -204,7 +295,8 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 4,
-            Padding = new Padding(0, 0, 12, 8)
+            Padding = new Padding(0, 0, 22, 18),
+            BackColor = Color.White
         };
         pathPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         pathPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -213,12 +305,13 @@ public sealed class MainForm : Form
         pathPanel.Controls.Add(MakeLabel("Folder or file path"), 0, 0);
         _folderPathInput.Dock = DockStyle.Fill;
         _folderPathInput.PlaceholderText = @"\\server\share\folder";
+        ConfigureTextBox(_folderPathInput);
         pathPanel.Controls.Add(_folderPathInput, 0, 1);
         var note = MakeLabel("Reports NTFS permissions visible from this path. Share-level permissions are separate.");
-        note.ForeColor = Color.FromArgb(83, 92, 104);
+        note.ForeColor = MutedColor;
         pathPanel.Controls.Add(note, 0, 2);
         _folderStatus.Dock = DockStyle.Fill;
-        _folderStatus.ForeColor = Color.FromArgb(83, 92, 104);
+        _folderStatus.ForeColor = MutedColor;
         _folderStatus.TextAlign = ContentAlignment.BottomLeft;
         pathPanel.Controls.Add(_folderStatus, 0, 3);
 
@@ -226,7 +319,8 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 7,
-            Padding = new Padding(0, 0, 12, 8)
+            Padding = new Padding(0, 0, 22, 18),
+            BackColor = Color.White
         };
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         optionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
@@ -238,6 +332,7 @@ public sealed class MainForm : Form
         optionPanel.Controls.Add(MakeLabel("Domain or controller (optional)"), 0, 0);
         _folderDomainInput.Dock = DockStyle.Top;
         _folderDomainInput.PlaceholderText = "corp.example.com or DC01";
+        ConfigureTextBox(_folderDomainInput);
         optionPanel.Controls.Add(_folderDomainInput, 0, 1);
         _expandAclGroupsCheck.Text = "Expand AD groups in ACL";
         _expandAclGroupsCheck.Checked = true;
@@ -246,6 +341,10 @@ public sealed class MainForm : Form
         _includeDenyCheck.Text = "Include deny entries";
         _includeDenyCheck.Checked = true;
         _includeDisabledAclUsersCheck.Text = "Include disabled expanded users";
+        ConfigureCheckBox(_expandAclGroupsCheck);
+        ConfigureCheckBox(_includeInheritedCheck);
+        ConfigureCheckBox(_includeDenyCheck);
+        ConfigureCheckBox(_includeDisabledAclUsersCheck);
         optionPanel.Controls.Add(_expandAclGroupsCheck, 0, 2);
         optionPanel.Controls.Add(_includeInheritedCheck, 0, 3);
         optionPanel.Controls.Add(_includeDenyCheck, 0, 4);
@@ -255,16 +354,17 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             RowCount = 4,
-            Padding = new Padding(0, 24, 0, 8)
+            Padding = new Padding(0, 24, 0, 18),
+            BackColor = Color.White
         };
         for (var i = 0; i < 3; i++)
         {
-            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
         }
         buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        ConfigureButton(_browseFolderButton, "Browse", BrowseFolderButton_Click);
-        ConfigureButton(_scanFolderButton, "Scan Rights", ScanFolderButton_Click);
-        ConfigureButton(_exportFolderButton, "Export Rights CSV", ExportFolderButton_Click);
+        ConfigureButton(_browseFolderButton, "Browse", BrowseFolderButton_Click, Color.White, InkColor);
+        ConfigureButton(_scanFolderButton, "Scan Rights", ScanFolderButton_Click, BlueColor, Color.White);
+        ConfigureButton(_exportFolderButton, "Export Rights CSV", ExportFolderButton_Click, TealColor, Color.White);
         buttonPanel.Controls.Add(_browseFolderButton, 0, 0);
         buttonPanel.Controls.Add(_scanFolderButton, 0, 1);
         buttonPanel.Controls.Add(_exportFolderButton, 0, 2);
@@ -276,13 +376,13 @@ public sealed class MainForm : Form
         ConfigureGrid(_folderGrid);
         layout.Controls.Add(top, 0, 0);
         layout.Controls.Add(_folderGrid, 0, 1);
-        page.Controls.Add(layout);
+        page.Controls.Add(CreateSurface(layout));
         return page;
     }
 
-    private TabPage BuildLogTab()
+    private Control BuildLogView()
     {
-        var page = new TabPage("Activity Log") { BackColor = BackColor };
+        var page = new Panel { Dock = DockStyle.Fill, BackColor = PageColor, Padding = new Padding(44, 18, 44, 28) };
         _logTextBox.Dock = DockStyle.Fill;
         _logTextBox.Multiline = true;
         _logTextBox.ReadOnly = true;
@@ -290,8 +390,8 @@ public sealed class MainForm : Form
         _logTextBox.WordWrap = false;
         _logTextBox.BackColor = Color.White;
         _logTextBox.Font = new Font("Consolas", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        page.Padding = new Padding(12);
-        page.Controls.Add(_logTextBox);
+        ConfigureTextBox(_logTextBox);
+        page.Controls.Add(CreateSurface(_logTextBox));
         return page;
     }
 
@@ -309,7 +409,7 @@ public sealed class MainForm : Form
         {
             var options = new GroupLookupOptions
             {
-                DomainOrServer = _folderDomainInput.Text.Trim(),
+                DomainOrServer = _domainInput.Text.Trim(),
                 Recursive = _recursiveCheck.Checked,
                 IncludeDisabled = _includeDisabledCheck.Checked
             };
@@ -349,7 +449,7 @@ public sealed class MainForm : Form
         {
             var options = new FolderRightsOptions
             {
-                DomainOrServer = _domainInput.Text.Trim(),
+                DomainOrServer = _folderDomainInput.Text.Trim(),
                 ExpandAdGroups = _expandAclGroupsCheck.Checked,
                 IncludeInherited = _includeInheritedCheck.Checked,
                 IncludeDenyEntries = _includeDenyCheck.Checked,
@@ -628,22 +728,37 @@ public sealed class MainForm : Form
         grid.MultiSelect = true;
         grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
         grid.BackgroundColor = Color.White;
-        grid.BorderStyle = BorderStyle.FixedSingle;
+        grid.BorderStyle = BorderStyle.None;
         grid.RowHeadersVisible = false;
         grid.EnableHeadersVisualStyles = false;
-        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(230, 236, 242);
-        grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(20, 34, 51);
-        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 252, 253);
+        grid.GridColor = LineColor;
+        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+        grid.ColumnHeadersHeight = 42;
+        grid.RowTemplate.Height = 42;
+        grid.DefaultCellStyle.BackColor = Color.White;
+        grid.DefaultCellStyle.ForeColor = Color.FromArgb(70, 90, 126);
+        grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
+        grid.DefaultCellStyle.SelectionForeColor = InkColor;
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+        grid.ColumnHeadersDefaultCellStyle.ForeColor = InkColor;
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
     }
 
-    private static void ConfigureButton(Button button, string text, EventHandler handler)
+    private static void ConfigureButton(Button button, string text, EventHandler handler, Color backColor, Color foreColor)
     {
         button.Text = text;
         button.Dock = DockStyle.Fill;
-        button.Height = 32;
-        button.Margin = new Padding(0, 0, 0, 8);
-        button.FlatStyle = FlatStyle.System;
+        button.Height = 48;
+        button.Margin = new Padding(0, 0, 0, 14);
+        button.FlatStyle = FlatStyle.Flat;
+        button.BackColor = backColor;
+        button.ForeColor = foreColor;
+        button.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+        button.FlatAppearance.BorderColor = backColor == Color.White ? LineColor : backColor;
+        button.FlatAppearance.BorderSize = 1;
+        button.UseVisualStyleBackColor = false;
         button.Click += handler;
     }
 
@@ -655,7 +770,241 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             AutoEllipsis = true,
             TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Color.FromArgb(20, 34, 51)
+            ForeColor = InkColor
         };
+    }
+
+    private Panel BuildHeader()
+    {
+        var header = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = HeaderColor,
+            Padding = new Padding(44, 0, 44, 0)
+        };
+
+        var logo = new PictureBox
+        {
+            Width = 42,
+            Height = 42,
+            SizeMode = PictureBoxSizeMode.StretchImage,
+            Left = 44,
+            Top = 23,
+            Image = Icon?.ToBitmap()
+        };
+
+        var title = new Label
+        {
+            Text = "AD Access Reporter",
+            AutoSize = true,
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 20F, FontStyle.Bold, GraphicsUnit.Point),
+            Left = 96,
+            Top = 23
+        };
+
+        header.Controls.Add(logo);
+        header.Controls.Add(title);
+        return header;
+    }
+
+    private Panel BuildMainNavigation()
+    {
+        var nav = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = PageColor,
+            Padding = new Padding(44, 0, 44, 0)
+        };
+
+        var flow = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = PageColor,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(0, 0, 0, 0)
+        };
+
+        ConfigureNavButton(_groupsNavButton, "AD Groups", () => ShowMainView(_groupsView, _groupsNavButton));
+        ConfigureNavButton(_folderNavButton, "Folder Rights", () => ShowMainView(_folderView, _folderNavButton));
+        ConfigureNavButton(_logNavButton, "Activity Log", () => ShowMainView(_logView, _logNavButton));
+        _mainNavButtons.AddRange(new[] { _groupsNavButton, _folderNavButton, _logNavButton });
+
+        flow.Controls.Add(_groupsNavButton);
+        flow.Controls.Add(_folderNavButton);
+        flow.Controls.Add(_logNavButton);
+        nav.Controls.Add(flow);
+        return nav;
+    }
+
+    private static Panel CreateSurface(Control content)
+    {
+        var surface = new SurfacePanel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            Padding = new Padding(32)
+        };
+
+        content.Dock = DockStyle.Fill;
+        surface.Controls.Add(content);
+        return surface;
+    }
+
+    private void ShowMainView(Control? view, Button activeButton)
+    {
+        if (view is null)
+        {
+            return;
+        }
+
+        foreach (Control control in _contentHost.Controls)
+        {
+            control.Visible = ReferenceEquals(control, view);
+        }
+
+        view.BringToFront();
+
+        foreach (var button in _mainNavButtons)
+        {
+            var active = ReferenceEquals(button, activeButton);
+            button.ForeColor = active ? Color.White : Color.FromArgb(61, 88, 132);
+            button.BackColor = PageColor;
+            button.FlatAppearance.BorderColor = active ? Color.White : PageColor;
+        }
+    }
+
+    private void ShowGroupResultView(bool showMembers)
+    {
+        _membersGridPanel.Visible = showMembers;
+        _comparisonGridPanel.Visible = !showMembers;
+
+        if (showMembers)
+        {
+            _membersGridPanel.BringToFront();
+        }
+        else
+        {
+            _comparisonGridPanel.BringToFront();
+        }
+
+        SetSegmentState(_membersResultButton, showMembers);
+        SetSegmentState(_comparisonResultButton, !showMembers);
+    }
+
+    private static void ConfigureTextBox(TextBox textBox)
+    {
+        textBox.BorderStyle = BorderStyle.FixedSingle;
+        textBox.BackColor = Color.White;
+        textBox.ForeColor = InkColor;
+    }
+
+    private static void ConfigureCheckBox(CheckBox checkBox)
+    {
+        checkBox.ForeColor = MutedColor;
+        checkBox.BackColor = Color.White;
+        checkBox.FlatStyle = FlatStyle.System;
+    }
+
+    private static void ConfigureNavButton(Button button, string text, Action action)
+    {
+        button.Text = text;
+        button.Width = 150;
+        button.Height = 42;
+        button.Margin = new Padding(0, 6, 10, 6);
+        button.FlatStyle = FlatStyle.Flat;
+        button.BackColor = PageColor;
+        button.ForeColor = Color.FromArgb(61, 88, 132);
+        button.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point);
+        button.TextAlign = ContentAlignment.MiddleLeft;
+        button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.BorderColor = PageColor;
+        button.UseVisualStyleBackColor = false;
+        button.Click += (_, _) => action();
+    }
+
+    private static void ConfigureSegmentButton(Button button, string text, EventHandler handler)
+    {
+        button.Text = text;
+        button.Width = 132;
+        button.Height = 36;
+        button.Margin = new Padding(0, 0, 8, 0);
+        button.FlatStyle = FlatStyle.Flat;
+        button.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+        button.TextAlign = ContentAlignment.MiddleLeft;
+        button.UseVisualStyleBackColor = false;
+        button.Click += handler;
+        SetSegmentState(button, false);
+    }
+
+    private static void SetSegmentState(Button button, bool active)
+    {
+        button.BackColor = Color.White;
+        button.ForeColor = active ? InkColor : MutedColor;
+        button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.BorderColor = active ? LineColor : Color.White;
+    }
+
+    private static Icon? LoadAppIcon()
+    {
+        try
+        {
+            return Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void ComparisonGrid_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (e.Value is not string text || e.RowIndex < 0)
+        {
+            return;
+        }
+
+        var cellStyle = e.CellStyle;
+        if (cellStyle is null)
+        {
+            return;
+        }
+
+        var columnName = _comparisonGrid.Columns[e.ColumnIndex].HeaderText;
+        if (string.Equals(columnName, "Status", StringComparison.OrdinalIgnoreCase))
+        {
+            if (text.Contains("Common", StringComparison.OrdinalIgnoreCase))
+            {
+                cellStyle.ForeColor = TealColor;
+            }
+            else if (text.Contains("Only", StringComparison.OrdinalIgnoreCase))
+            {
+                cellStyle.ForeColor = AmberColor;
+            }
+            else
+            {
+                cellStyle.ForeColor = BlueColor;
+            }
+        }
+        else if (string.Equals(text, "Yes", StringComparison.OrdinalIgnoreCase))
+        {
+            cellStyle.ForeColor = Color.FromArgb(70, 90, 126);
+        }
+    }
+
+    private sealed class SurfacePanel : Panel
+    {
+        public SurfacePanel()
+        {
+            DoubleBuffered = true;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using var pen = new Pen(LineColor);
+            e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+        }
     }
 }

@@ -8,7 +8,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$Version = '0.1.0'
+$Version = '1.0.0'
 $ReleaseTag = "v$Version"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $projectPath = Join-Path $repoRoot 'src\ADAccessReporter\ADAccessReporter.csproj'
@@ -101,7 +101,21 @@ $zipSources = @(
     (Join-Path $releaseDir 'LICENSE'),
     (Join-Path $releaseDir 'latest.json')
 )
-Compress-Archive -Path $zipSources -DestinationPath $zipPath -Force
+$compressed = $false
+for ($attempt = 1; $attempt -le 5 -and -not $compressed; $attempt++) {
+    try {
+        Start-Sleep -Milliseconds (300 * $attempt)
+        Compress-Archive -Path $zipSources -DestinationPath $zipPath -Force
+        $compressed = $true
+    }
+    catch {
+        if ($attempt -eq 5) {
+            throw
+        }
+
+        Write-Warning "Zip attempt $attempt failed: $($_.Exception.Message)"
+    }
+}
 
 $hashRows = Get-ChildItem -LiteralPath $releaseDir -File |
     Where-Object { $_.Name -ne 'checksums.txt' } |

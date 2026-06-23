@@ -1,9 +1,9 @@
 ﻿{
-    "version":  "0.1.0",
-    "tagName":  "v0.1.0",
-    "windowsExe":  "ADAccessReporter-v0.1.0-win-x64.exe",
-    "portableZip":  "ADAccessReporter-v0.1.0-portable.zip",
+    "version":  "1.0.0",
+    "tagName":  "v1.0.0",
+    "windowsExe":  "ADAccessReporter-v1.0.0-win-x64.exe",
+    "portableZip":  "ADAccessReporter-v1.0.0-portable.zip",
     "selfContained":  false,
     "requiresDotNetDesktopRuntime":  true,
-    "releaseUrl":  "https://github.com/eMacTh3Creator/ADAccessReporter/releases/tag/v0.1.0"
+    "releaseUrl":  "https://github.com/eMacTh3Creator/ADAccessReporter/releases/tag/v1.0.0"
 }
