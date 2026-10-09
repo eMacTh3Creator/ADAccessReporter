@@ -10,7 +10,7 @@
   <a href="https://github.com/eMacTh3Creator/ADAccessReporter/releases/latest">Latest release</a>
 </p>
 
-Windows desktop utility for Active Directory group reporting, group-to-group comparison, and folder permission exports.
+List users in Active Directory groups, compare membership, and export the results to CSV. You can also report NTFS permissions on folders and network shares.
 
 ## What it does
 
